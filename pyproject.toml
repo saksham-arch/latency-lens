@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "latency-lens"
+version = "0.1.0"
+description = "Inspectable request-latency summaries"
+requires-python = ">=3.9"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+latency-lens = "latency_lens.__main__:main"
+
