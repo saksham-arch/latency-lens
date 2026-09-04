@@ -12,9 +12,11 @@ Each input line must contain `route`, `duration_ms`, and `status`:
 
 ```bash
 PYTHONPATH=src python3 -m latency_lens requests.jsonl
+PYTHONPATH=src python3 -m latency_lens requests.jsonl --budget-ms 250 --minimum-samples 20
 python3 -m unittest discover -s tests
 ```
 
 The output is descriptive. It does not establish an SLO or statistical
 significance, and low-volume routes should be interpreted cautiously.
-
+Optional budget evaluation always uses a caller-supplied threshold and reports
+`insufficient_samples` until the configured sample floor is reached.

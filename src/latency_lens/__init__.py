@@ -1,6 +1,17 @@
 """Request-latency analysis primitives."""
 
-from .analysis import RequestEvent, RouteSummary, summarize_routes
+from .analysis import (
+    BudgetEvaluation,
+    RequestEvent,
+    RouteSummary,
+    evaluate_budgets,
+    summarize_routes,
+)
 
-__all__ = ["RequestEvent", "RouteSummary", "summarize_routes"]
-
+__all__ = [
+    "BudgetEvaluation",
+    "RequestEvent",
+    "RouteSummary",
+    "evaluate_budgets",
+    "summarize_routes",
+]

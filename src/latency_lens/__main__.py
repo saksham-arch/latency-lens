@@ -3,7 +3,7 @@ from dataclasses import asdict
 import json
 from pathlib import Path
 
-from .analysis import RequestEvent, summarize_routes
+from .analysis import RequestEvent, evaluate_budgets, summarize_routes
 
 
 def load_events(path: Path) -> list[RequestEvent]:
@@ -29,10 +29,19 @@ def load_events(path: Path) -> list[RequestEvent]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Summarize request latency JSONL")
     parser.add_argument("path", type=Path)
+    parser.add_argument("--budget-ms", type=float)
+    parser.add_argument("--minimum-samples", type=int, default=20)
     args = parser.parse_args()
-    print(json.dumps([asdict(item) for item in summarize_routes(load_events(args.path))], indent=2))
+    summaries = summarize_routes(load_events(args.path))
+    payload = [asdict(item) for item in summaries]
+    if args.budget_ms is not None:
+        evaluations = evaluate_budgets(
+            summaries, args.budget_ms, minimum_samples=args.minimum_samples
+        )
+        for item, evaluation in zip(payload, evaluations):
+            item["budget"] = asdict(evaluation)
+    print(json.dumps(payload, indent=2))
 
 
 if __name__ == "__main__":
     main()
-

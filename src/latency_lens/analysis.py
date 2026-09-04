@@ -29,6 +29,15 @@ class RouteSummary:
     error_rate: float
 
 
+@dataclass(frozen=True)
+class BudgetEvaluation:
+    route: str
+    budget_ms: float
+    observed_p95_ms: float
+    minimum_samples: int
+    status: str
+
+
 def summarize_routes(events: Iterable[RequestEvent]) -> list[RouteSummary]:
     grouped: dict[str, list[RequestEvent]] = {}
     for event in events:
@@ -51,3 +60,32 @@ def summarize_routes(events: Iterable[RequestEvent]) -> list[RouteSummary]:
         )
     return summaries
 
+
+def evaluate_budgets(
+    summaries: Iterable[RouteSummary],
+    budget_ms: float,
+    *,
+    minimum_samples: int = 20,
+) -> list[BudgetEvaluation]:
+    if not isfinite(budget_ms) or budget_ms <= 0:
+        raise ValueError("budget_ms must be finite and positive")
+    if minimum_samples < 1:
+        raise ValueError("minimum_samples must be positive")
+    evaluations: list[BudgetEvaluation] = []
+    for summary in summaries:
+        if summary.count < minimum_samples:
+            status = "insufficient_samples"
+        elif summary.p95_ms <= budget_ms:
+            status = "within_budget"
+        else:
+            status = "over_budget"
+        evaluations.append(
+            BudgetEvaluation(
+                summary.route,
+                budget_ms,
+                summary.p95_ms,
+                minimum_samples,
+                status,
+            )
+        )
+    return evaluations
