@@ -26,7 +26,13 @@ class RouteSummary:
     median_ms: float
     p95_ms: float
     maximum_ms: float
-    error_rate: float
+    client_error_rate: float
+    server_error_rate: float
+
+    @property
+    def error_rate(self) -> float:
+        """Backward-compatible alias for the original server-error metric."""
+        return self.server_error_rate
 
 
 @dataclass(frozen=True)
@@ -47,7 +53,8 @@ def summarize_routes(events: Iterable[RequestEvent]) -> list[RouteSummary]:
     for route, route_events in sorted(grouped.items()):
         durations = sorted(event.duration_ms for event in route_events)
         p95_index = ceil(0.95 * len(durations)) - 1
-        errors = sum(event.status >= 500 for event in route_events)
+        client_errors = sum(400 <= event.status < 500 for event in route_events)
+        server_errors = sum(event.status >= 500 for event in route_events)
         summaries.append(
             RouteSummary(
                 route=route,
@@ -55,7 +62,8 @@ def summarize_routes(events: Iterable[RequestEvent]) -> list[RouteSummary]:
                 median_ms=median(durations),
                 p95_ms=durations[p95_index],
                 maximum_ms=durations[-1],
-                error_rate=errors / len(route_events),
+                client_error_rate=client_errors / len(route_events),
+                server_error_rate=server_errors / len(route_events),
             )
         )
     return summaries

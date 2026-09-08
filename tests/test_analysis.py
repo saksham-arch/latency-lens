@@ -9,12 +9,15 @@ class RouteSummaryTests(unittest.TestCase):
             RequestEvent("GET /a", 10, 200),
             RequestEvent("GET /a", 20, 500),
             RequestEvent("GET /a", 15, 200),
+            RequestEvent("GET /a", 12, 404),
             RequestEvent("GET /b", 5, 204),
         ]
         a, b = summarize_routes(events)
-        self.assertEqual((a.route, a.count, a.median_ms), ("GET /a", 3, 15))
+        self.assertEqual((a.route, a.count, a.median_ms), ("GET /a", 4, 13.5))
         self.assertEqual(a.p95_ms, 20)
-        self.assertAlmostEqual(a.error_rate, 1 / 3)
+        self.assertEqual(a.client_error_rate, 0.25)
+        self.assertEqual(a.server_error_rate, 0.25)
+        self.assertEqual(a.error_rate, a.server_error_rate)
         self.assertEqual((b.route, b.maximum_ms), ("GET /b", 5))
 
     def test_empty_input_has_no_summaries(self) -> None:

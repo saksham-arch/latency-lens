@@ -20,3 +20,6 @@ The output is descriptive. It does not establish an SLO or statistical
 significance, and low-volume routes should be interpreted cautiously.
 Optional budget evaluation always uses a caller-supplied threshold and reports
 `insufficient_samples` until the configured sample floor is reached.
+
+Client-error (4xx) and server-error (5xx) rates are reported separately. This
+keeps caller mistakes from being silently merged with service failures.
