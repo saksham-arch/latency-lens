@@ -23,3 +23,7 @@ Optional budget evaluation always uses a caller-supplied threshold and reports
 
 Client-error (4xx) and server-error (5xx) rates are reported separately. This
 keeps caller mistakes from being silently merged with service failures.
+Each route also reports the count, median, and nearest-rank p95 for non-error
+responses (status below 400). Those fields are `null` when a route has no
+non-error observations. The original latency fields continue to describe all
+responses, and budget evaluation continues to use that all-response p95.

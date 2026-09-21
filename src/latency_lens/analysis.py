@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from math import ceil, isfinite
 from statistics import median
-from typing import Iterable
+from typing import Iterable, Optional
 
 
 @dataclass(frozen=True)
@@ -26,6 +26,9 @@ class RouteSummary:
     median_ms: float
     p95_ms: float
     maximum_ms: float
+    non_error_count: int
+    non_error_median_ms: Optional[float]
+    non_error_p95_ms: Optional[float]
     client_error_rate: float
     server_error_rate: float
 
@@ -53,6 +56,14 @@ def summarize_routes(events: Iterable[RequestEvent]) -> list[RouteSummary]:
     for route, route_events in sorted(grouped.items()):
         durations = sorted(event.duration_ms for event in route_events)
         p95_index = ceil(0.95 * len(durations)) - 1
+        non_error_durations = sorted(
+            event.duration_ms for event in route_events if event.status < 400
+        )
+        non_error_p95_index = (
+            ceil(0.95 * len(non_error_durations)) - 1
+            if non_error_durations
+            else None
+        )
         client_errors = sum(400 <= event.status < 500 for event in route_events)
         server_errors = sum(event.status >= 500 for event in route_events)
         summaries.append(
@@ -62,6 +73,15 @@ def summarize_routes(events: Iterable[RequestEvent]) -> list[RouteSummary]:
                 median_ms=median(durations),
                 p95_ms=durations[p95_index],
                 maximum_ms=durations[-1],
+                non_error_count=len(non_error_durations),
+                non_error_median_ms=(
+                    median(non_error_durations) if non_error_durations else None
+                ),
+                non_error_p95_ms=(
+                    non_error_durations[non_error_p95_index]
+                    if non_error_p95_index is not None
+                    else None
+                ),
                 client_error_rate=client_errors / len(route_events),
                 server_error_rate=server_errors / len(route_events),
             )
