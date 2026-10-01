@@ -42,8 +42,10 @@ class RouteSummary:
 class BudgetEvaluation:
     route: str
     budget_ms: float
-    observed_p95_ms: float
+    observed_p95_ms: Optional[float]
+    sample_count: int
     minimum_samples: int
+    scope: str
     status: str
 
 
@@ -94,26 +96,38 @@ def evaluate_budgets(
     budget_ms: float,
     *,
     minimum_samples: int = 20,
+    scope: str = "all",
 ) -> list[BudgetEvaluation]:
     if not isfinite(budget_ms) or budget_ms <= 0:
         raise ValueError("budget_ms must be finite and positive")
     if minimum_samples < 1:
         raise ValueError("minimum_samples must be positive")
+    if scope not in {"all", "non_error"}:
+        raise ValueError("scope must be 'all' or 'non_error'")
     evaluations: list[BudgetEvaluation] = []
     for summary in summaries:
-        if summary.count < minimum_samples:
+        if scope == "all":
+            sample_count = summary.count
+            observed_p95_ms = summary.p95_ms
+        else:
+            sample_count = summary.non_error_count
+            observed_p95_ms = summary.non_error_p95_ms
+
+        if sample_count < minimum_samples:
             status = "insufficient_samples"
-        elif summary.p95_ms <= budget_ms:
+        elif observed_p95_ms is not None and observed_p95_ms <= budget_ms:
             status = "within_budget"
         else:
             status = "over_budget"
         evaluations.append(
             BudgetEvaluation(
-                summary.route,
-                budget_ms,
-                summary.p95_ms,
-                minimum_samples,
-                status,
+                route=summary.route,
+                budget_ms=budget_ms,
+                observed_p95_ms=observed_p95_ms,
+                sample_count=sample_count,
+                minimum_samples=minimum_samples,
+                scope=scope,
+                status=status,
             )
         )
     return evaluations

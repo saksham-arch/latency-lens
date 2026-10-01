@@ -53,11 +53,44 @@ class RouteSummaryTests(unittest.TestCase):
             "insufficient_samples",
         )
 
+    def test_evaluates_non_error_latency_budget_separately(self) -> None:
+        summary = summarize_routes(
+            [
+                RequestEvent("GET /", 10, 200),
+                RequestEvent("GET /", 12, 204),
+                RequestEvent("GET /", 500, 503),
+            ]
+        )
+
+        all_responses = evaluate_budgets(
+            summary, 20, minimum_samples=2, scope="all"
+        )[0]
+        non_errors = evaluate_budgets(
+            summary, 20, minimum_samples=2, scope="non_error"
+        )[0]
+
+        self.assertEqual(all_responses.status, "over_budget")
+        self.assertEqual(non_errors.status, "within_budget")
+        self.assertEqual(non_errors.sample_count, 2)
+        self.assertEqual(non_errors.observed_p95_ms, 12)
+        self.assertEqual(non_errors.scope, "non_error")
+
+    def test_non_error_budget_reports_missing_observations(self) -> None:
+        summary = summarize_routes([RequestEvent("GET /failed", 10, 500)])
+        evaluation = evaluate_budgets(
+            summary, 20, minimum_samples=1, scope="non_error"
+        )[0]
+        self.assertEqual(evaluation.status, "insufficient_samples")
+        self.assertEqual(evaluation.sample_count, 0)
+        self.assertIsNone(evaluation.observed_p95_ms)
+
     def test_validates_budget_configuration(self) -> None:
         with self.assertRaises(ValueError):
             evaluate_budgets([], 0)
         with self.assertRaises(ValueError):
             evaluate_budgets([], 10, minimum_samples=0)
+        with self.assertRaises(ValueError):
+            evaluate_budgets([], 10, scope="successful")
 
 
 if __name__ == "__main__":

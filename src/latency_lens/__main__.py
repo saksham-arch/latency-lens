@@ -31,12 +31,21 @@ def main() -> None:
     parser.add_argument("path", type=Path)
     parser.add_argument("--budget-ms", type=float)
     parser.add_argument("--minimum-samples", type=int, default=20)
+    parser.add_argument(
+        "--budget-scope",
+        choices=("all", "non_error"),
+        default="all",
+        help="responses used for budget sample count and p95",
+    )
     args = parser.parse_args()
     summaries = summarize_routes(load_events(args.path))
     payload = [asdict(item) for item in summaries]
     if args.budget_ms is not None:
         evaluations = evaluate_budgets(
-            summaries, args.budget_ms, minimum_samples=args.minimum_samples
+            summaries,
+            args.budget_ms,
+            minimum_samples=args.minimum_samples,
+            scope=args.budget_scope,
         )
         for item, evaluation in zip(payload, evaluations):
             item["budget"] = asdict(evaluation)

@@ -13,6 +13,7 @@ Each input line must contain `route`, `duration_ms`, and `status`:
 ```bash
 PYTHONPATH=src python3 -m latency_lens requests.jsonl
 PYTHONPATH=src python3 -m latency_lens requests.jsonl --budget-ms 250 --minimum-samples 20
+PYTHONPATH=src python3 -m latency_lens requests.jsonl --budget-ms 250 --budget-scope non_error
 python3 -m unittest discover -s tests
 ```
 
@@ -25,5 +26,7 @@ Client-error (4xx) and server-error (5xx) rates are reported separately. This
 keeps caller mistakes from being silently merged with service failures.
 Each route also reports the count, median, and nearest-rank p95 for non-error
 responses (status below 400). Those fields are `null` when a route has no
-non-error observations. The original latency fields continue to describe all
-responses, and budget evaluation continues to use that all-response p95.
+non-error observations. Budget evaluation uses all responses by default;
+`--budget-scope non_error` instead uses the non-error count and p95. This can
+separate successful-response latency from error-path behavior, but both scopes
+should be inspected rather than using one to conceal the other.
