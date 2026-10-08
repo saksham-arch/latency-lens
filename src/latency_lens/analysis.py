@@ -43,6 +43,8 @@ class BudgetEvaluation:
     route: str
     budget_ms: float
     observed_p95_ms: Optional[float]
+    headroom_ms: Optional[float]
+    utilization: Optional[float]
     sample_count: int
     minimum_samples: int
     scope: str
@@ -124,6 +126,16 @@ def evaluate_budgets(
                 route=summary.route,
                 budget_ms=budget_ms,
                 observed_p95_ms=observed_p95_ms,
+                headroom_ms=(
+                    budget_ms - observed_p95_ms
+                    if observed_p95_ms is not None
+                    else None
+                ),
+                utilization=(
+                    observed_p95_ms / budget_ms
+                    if observed_p95_ms is not None
+                    else None
+                ),
                 sample_count=sample_count,
                 minimum_samples=minimum_samples,
                 scope=scope,

@@ -44,14 +44,21 @@ class RouteSummaryTests(unittest.TestCase):
             [RequestEvent("fast", 10, 200), RequestEvent("slow", 30, 200)]
         )
         evaluations = evaluate_budgets(summaries, 20, minimum_samples=1)
-        self.assertEqual([item.status for item in evaluations], ["within_budget", "over_budget"])
+        self.assertEqual(
+            [item.status for item in evaluations],
+            ["within_budget", "over_budget"],
+        )
+        self.assertEqual(evaluations[0].headroom_ms, 10)
+        self.assertEqual(evaluations[0].utilization, 0.5)
+        self.assertEqual(evaluations[1].headroom_ms, -10)
+        self.assertEqual(evaluations[1].utilization, 1.5)
 
     def test_marks_low_volume_route_as_insufficient(self) -> None:
         summary = summarize_routes([RequestEvent("GET /", 10, 200)])
-        self.assertEqual(
-            evaluate_budgets(summary, 20, minimum_samples=2)[0].status,
-            "insufficient_samples",
-        )
+        evaluation = evaluate_budgets(summary, 20, minimum_samples=2)[0]
+        self.assertEqual(evaluation.status, "insufficient_samples")
+        self.assertEqual(evaluation.headroom_ms, 10)
+        self.assertEqual(evaluation.utilization, 0.5)
 
     def test_evaluates_non_error_latency_budget_separately(self) -> None:
         summary = summarize_routes(
@@ -83,6 +90,8 @@ class RouteSummaryTests(unittest.TestCase):
         self.assertEqual(evaluation.status, "insufficient_samples")
         self.assertEqual(evaluation.sample_count, 0)
         self.assertIsNone(evaluation.observed_p95_ms)
+        self.assertIsNone(evaluation.headroom_ms)
+        self.assertIsNone(evaluation.utilization)
 
     def test_validates_budget_configuration(self) -> None:
         with self.assertRaises(ValueError):

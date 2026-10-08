@@ -21,6 +21,11 @@ The output is descriptive. It does not establish an SLO or statistical
 significance, and low-volume routes should be interpreted cautiously.
 Optional budget evaluation always uses a caller-supplied threshold and reports
 `insufficient_samples` until the configured sample floor is reached.
+It also reports signed `headroom_ms` (budget minus observed p95) and
+`utilization` (observed p95 divided by the budget). A negative headroom or
+utilization above 1 indicates a breach. These values are descriptive even when
+the status is `insufficient_samples`; the sample status remains the confidence
+guardrail.
 
 Client-error (4xx) and server-error (5xx) rates are reported separately. This
 keeps caller mistakes from being silently merged with service failures.
