@@ -29,6 +29,8 @@ class RouteSummary:
     non_error_count: int
     non_error_median_ms: Optional[float]
     non_error_p95_ms: Optional[float]
+    client_error_count: int
+    server_error_count: int
     client_error_rate: float
     server_error_rate: float
 
@@ -86,6 +88,8 @@ def summarize_routes(events: Iterable[RequestEvent]) -> list[RouteSummary]:
                     if non_error_p95_index is not None
                     else None
                 ),
+                client_error_count=client_errors,
+                server_error_count=server_errors,
                 client_error_rate=client_errors / len(route_events),
                 server_error_rate=server_errors / len(route_events),
             )

@@ -27,8 +27,10 @@ utilization above 1 indicates a breach. These values are descriptive even when
 the status is `insufficient_samples`; the sample status remains the confidence
 guardrail.
 
-Client-error (4xx) and server-error (5xx) rates are reported separately. This
-keeps caller mistakes from being silently merged with service failures.
+Client-error (4xx) and server-error (5xx) counts and rates are reported
+separately. The raw counts keep small denominators visible, while the rates aid
+comparison across routes. This keeps caller mistakes from being silently
+merged with service failures.
 Each route also reports the count, median, and nearest-rank p95 for non-error
 responses (status below 400). Those fields are `null` when a route has no
 non-error observations. Budget evaluation uses all responses by default;
