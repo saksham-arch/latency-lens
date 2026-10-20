@@ -14,7 +14,7 @@ Each input line must contain `route`, `duration_ms`, and `status`:
 PYTHONPATH=src python3 -m latency_lens requests.jsonl
 PYTHONPATH=src python3 -m latency_lens requests.jsonl --budget-ms 250 --minimum-samples 20
 PYTHONPATH=src python3 -m latency_lens requests.jsonl --budget-ms 250 --budget-scope non_error
-python3 -m unittest discover -s tests
+PYTHONPATH=src python3 -m unittest discover -s tests
 ```
 
 The output is descriptive. It does not establish an SLO or statistical
@@ -37,3 +37,9 @@ non-error observations. Budget evaluation uses all responses by default;
 `--budget-scope non_error` instead uses the non-error count and p95. This can
 separate successful-response latency from error-path behavior, but both scopes
 should be inspected rather than using one to conceal the other.
+
+Error responses (status 400 and above) also have their own count, median, and
+nearest-rank p95. These fields are `null` when no error was observed. Error
+latency can be unusually short because a request failed early, or unusually
+long because it timed out; it describes the failure path but does not by itself
+identify the cause or severity of a failure.

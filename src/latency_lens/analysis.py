@@ -29,6 +29,9 @@ class RouteSummary:
     non_error_count: int
     non_error_median_ms: Optional[float]
     non_error_p95_ms: Optional[float]
+    error_count: int
+    error_median_ms: Optional[float]
+    error_p95_ms: Optional[float]
     client_error_count: int
     server_error_count: int
     client_error_rate: float
@@ -70,6 +73,12 @@ def summarize_routes(events: Iterable[RequestEvent]) -> list[RouteSummary]:
             if non_error_durations
             else None
         )
+        error_durations = sorted(
+            event.duration_ms for event in route_events if event.status >= 400
+        )
+        error_p95_index = (
+            ceil(0.95 * len(error_durations)) - 1 if error_durations else None
+        )
         client_errors = sum(400 <= event.status < 500 for event in route_events)
         server_errors = sum(event.status >= 500 for event in route_events)
         summaries.append(
@@ -86,6 +95,15 @@ def summarize_routes(events: Iterable[RequestEvent]) -> list[RouteSummary]:
                 non_error_p95_ms=(
                     non_error_durations[non_error_p95_index]
                     if non_error_p95_index is not None
+                    else None
+                ),
+                error_count=len(error_durations),
+                error_median_ms=(
+                    median(error_durations) if error_durations else None
+                ),
+                error_p95_ms=(
+                    error_durations[error_p95_index]
+                    if error_p95_index is not None
                     else None
                 ),
                 client_error_count=client_errors,

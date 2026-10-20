@@ -18,6 +18,9 @@ class RouteSummaryTests(unittest.TestCase):
         self.assertEqual(a.non_error_count, 2)
         self.assertEqual(a.non_error_median_ms, 12.5)
         self.assertEqual(a.non_error_p95_ms, 15)
+        self.assertEqual(a.error_count, 2)
+        self.assertEqual(a.error_median_ms, 16)
+        self.assertEqual(a.error_p95_ms, 20)
         self.assertEqual(a.client_error_count, 1)
         self.assertEqual(a.server_error_count, 1)
         self.assertEqual(a.client_error_rate, 0.25)
@@ -30,10 +33,20 @@ class RouteSummaryTests(unittest.TestCase):
             [RequestEvent("GET /failed", 8, 404), RequestEvent("GET /failed", 12, 503)]
         )[0]
         self.assertEqual(summary.non_error_count, 0)
+        self.assertEqual(summary.error_count, 2)
+        self.assertEqual(summary.error_median_ms, 10)
+        self.assertEqual(summary.error_p95_ms, 12)
         self.assertEqual(summary.client_error_count, 1)
         self.assertEqual(summary.server_error_count, 1)
         self.assertIsNone(summary.non_error_median_ms)
         self.assertIsNone(summary.non_error_p95_ms)
+
+    def test_reports_missing_error_latency_for_error_free_route(self) -> None:
+        summary = summarize_routes([RequestEvent("GET /healthy", 8, 200)])[0]
+
+        self.assertEqual(summary.error_count, 0)
+        self.assertIsNone(summary.error_median_ms)
+        self.assertIsNone(summary.error_p95_ms)
 
     def test_empty_input_has_no_summaries(self) -> None:
         self.assertEqual(summarize_routes([]), [])
