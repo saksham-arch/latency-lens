@@ -33,7 +33,7 @@ def main() -> None:
     parser.add_argument("--minimum-samples", type=int, default=20)
     parser.add_argument(
         "--budget-scope",
-        choices=("all", "non_error"),
+        choices=("all", "non_error", "error"),
         default="all",
         help="responses used for budget sample count and p95",
     )

@@ -14,6 +14,7 @@ Each input line must contain `route`, `duration_ms`, and `status`:
 PYTHONPATH=src python3 -m latency_lens requests.jsonl
 PYTHONPATH=src python3 -m latency_lens requests.jsonl --budget-ms 250 --minimum-samples 20
 PYTHONPATH=src python3 -m latency_lens requests.jsonl --budget-ms 250 --budget-scope non_error
+PYTHONPATH=src python3 -m latency_lens requests.jsonl --budget-ms 250 --budget-scope error
 PYTHONPATH=src python3 -m unittest discover -s tests
 ```
 
@@ -43,3 +44,7 @@ nearest-rank p95. These fields are `null` when no error was observed. Error
 latency can be unusually short because a request failed early, or unusually
 long because it timed out; it describes the failure path but does not by itself
 identify the cause or severity of a failure.
+`--budget-scope error` evaluates the caller-supplied threshold against only
+error-response count and p95. It reports `insufficient_samples` when no errors
+or too few errors were observed. This can characterize a failure path, but it
+does not make errors acceptable or turn their latency into a service objective.

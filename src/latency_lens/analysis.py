@@ -126,16 +126,19 @@ def evaluate_budgets(
         raise ValueError("budget_ms must be finite and positive")
     if minimum_samples < 1:
         raise ValueError("minimum_samples must be positive")
-    if scope not in {"all", "non_error"}:
-        raise ValueError("scope must be 'all' or 'non_error'")
+    if scope not in {"all", "non_error", "error"}:
+        raise ValueError("scope must be 'all', 'non_error', or 'error'")
     evaluations: list[BudgetEvaluation] = []
     for summary in summaries:
         if scope == "all":
             sample_count = summary.count
             observed_p95_ms = summary.p95_ms
-        else:
+        elif scope == "non_error":
             sample_count = summary.non_error_count
             observed_p95_ms = summary.non_error_p95_ms
+        else:
+            sample_count = summary.error_count
+            observed_p95_ms = summary.error_p95_ms
 
         if sample_count < minimum_samples:
             status = "insufficient_samples"

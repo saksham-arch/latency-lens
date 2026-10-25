@@ -110,6 +110,36 @@ class RouteSummaryTests(unittest.TestCase):
         self.assertIsNone(evaluation.headroom_ms)
         self.assertIsNone(evaluation.utilization)
 
+    def test_evaluates_error_latency_budget_separately(self) -> None:
+        summary = summarize_routes(
+            [
+                RequestEvent("GET /", 10, 200),
+                RequestEvent("GET /", 80, 404),
+                RequestEvent("GET /", 120, 503),
+            ]
+        )
+
+        evaluation = evaluate_budgets(
+            summary, 100, minimum_samples=2, scope="error"
+        )[0]
+
+        self.assertEqual(evaluation.status, "over_budget")
+        self.assertEqual(evaluation.sample_count, 2)
+        self.assertEqual(evaluation.observed_p95_ms, 120)
+        self.assertEqual(evaluation.scope, "error")
+
+    def test_error_budget_reports_missing_observations(self) -> None:
+        summary = summarize_routes([RequestEvent("GET /healthy", 10, 200)])
+        evaluation = evaluate_budgets(
+            summary, 20, minimum_samples=1, scope="error"
+        )[0]
+
+        self.assertEqual(evaluation.status, "insufficient_samples")
+        self.assertEqual(evaluation.sample_count, 0)
+        self.assertIsNone(evaluation.observed_p95_ms)
+        self.assertIsNone(evaluation.headroom_ms)
+        self.assertIsNone(evaluation.utilization)
+
     def test_validates_budget_configuration(self) -> None:
         with self.assertRaises(ValueError):
             evaluate_budgets([], 0)
